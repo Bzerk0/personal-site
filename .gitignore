@@ -1,0 +1,5 @@
+node_modules
+dist
+# Generated from src/data/projects.json by scripts/build-projects.js
+/projects
+.netlify

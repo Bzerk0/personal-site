@@ -1,0 +1,134 @@
+/* Shared foundations: fonts, colors, spacing, and basic text styles.
+   Every page loads this file first. */
+
+/* Self-hosted fonts (installed with npm, bundled by Vite; nothing is loaded from Google). */
+@import '@fontsource/press-start-2p/latin-400.css';
+@import '@fontsource/tilt-neon/latin-400.css';
+@import '@fontsource-variable/inter/wght.css';
+@import '@fontsource/micro-5/latin-400.css';
+@import '@fontsource-variable/doto/wght.css';
+
+:root {
+  /* ---- Colors. Change them here; src/constants.js mirrors them for the 3D scene. ---- */
+  --bg: #07060b;
+  --bg-raised: #131217; /* cards, form fields */
+  --line: #29282f;
+  --text: #ededf1;
+  --text-dim: #a4a3ad;
+  --magenta: #ff2bd6;
+  --cyan: #18e7ff;
+  --amber: #ffb347;
+  --accent: var(--cyan); /* project pages override this with the project's own color */
+  --focus: var(--cyan); /* keyboard focus ring */
+
+  /* ---- Fonts ---- */
+  --font-pixel: 'Press Start 2P', ui-monospace, monospace; /* arcade labels (home page only) */
+  --font-neon: 'Tilt Neon', 'Inter Variable', sans-serif; /* the sign (home page only) */
+  --font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-label: 'Micro 5', ui-monospace, monospace; /* home page menu and small labels */
+  --font-loader: 'Doto Variable', ui-monospace, monospace; /* loading screen */
+
+  /* ---- Spacing scale (multiples of 8px) ---- */
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 48px;
+  --s6: 64px;
+  --s7: 96px;
+
+  /* ---- Type scale ---- */
+  --t-small: 0.8125rem; /* 13px */
+  --t-body: 1.0625rem; /* 17px */
+  --t-lede: 1.25rem; /* 20px */
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --nav-h: 64px;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 var(--t-body) / 1.65 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+dl,
+dd {
+  margin: 0;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* One focus style everywhere, so keyboard users can always see where they are. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* Small uppercase label text on the home page (hints, counters). The menu matches it: see nav.css. */
+.mono {
+  font: 400 1.625rem / 1 var(--font-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Hidden visually but still read by screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

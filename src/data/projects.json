@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "allen-sapp-gallery",
+    "name": "Allen Sapp Gallery",
+    "marquee": "ALLEN SAPP",
+    "tagline": "Website redesign for the Allen Sapp Gallery.",
+    "accent": "#ffb347",
+    "image": "",
+    "imageAlt": "",
+    "video": "",
+    "whatItIs": "TODO: describe the Allen Sapp Gallery website redesign.",
+    "whatIDid": "TODO: describe my role and what I built.",
+    "tools": ["TODO: list the tools used"],
+    "status": "TODO: status / outcome.",
+    "note": "",
+    "links": []
+  },
+  {
+    "slug": "scholarship-agent",
+    "name": "Scholarship Agent",
+    "marquee": "SCHOLAR AGENT",
+    "tagline": "An AI agent that helps with scholarship applications.",
+    "accent": "#18e7ff",
+    "image": "",
+    "imageAlt": "",
+    "video": "",
+    "whatItIs": "An AI agent I built with Claude Code that helps with scholarship applications. TODO: add more detail.",
+    "whatIDid": "TODO: describe how I built it.",
+    "tools": ["Claude Code", "TODO: list the other tools used"],
+    "status": "TODO: status / outcome.",
+    "note": "",
+    "links": []
+  },
+  {
+    "slug": "starting5pokemon",
+    "name": "starting5pokemon",
+    "marquee": "STARTING 5",
+    "tagline": "A fan-made Pokémon basketball game.",
+    "accent": "#ff2bd6",
+    "image": "",
+    "imageAlt": "",
+    "video": "",
+    "whatItIs": "A fan-made Pokémon basketball game. TODO: add more detail.",
+    "whatIDid": "TODO: describe what I built.",
+    "tools": ["TODO: list the tools used"],
+    "status": "In progress.",
+    "note": "Unofficial fan project. Not affiliated with or endorsed by Nintendo, Game Freak, or The Pokémon Company.",
+    "links": []
+  }
+]

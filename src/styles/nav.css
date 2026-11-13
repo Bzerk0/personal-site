@@ -1,0 +1,193 @@
+/* The menu (top of every page). All menu styling lives in this file.
+   Section 1 is the clean menu used on the flat pages.
+   Section 2 restyles it for the 3D home page (uppercase Micro 5 pixel font + neon underline).
+   Section 3 is the phone version (a Menu button that opens a full-screen overlay). */
+
+/* ---- 1. Flat pages ---- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-h);
+  padding: 0 var(--s4);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  transition: opacity 400ms var(--ease);
+}
+
+.nav a,
+.nav__toggle {
+  font: 500 0.9375rem / 1 var(--font-body);
+  text-decoration: none;
+  color: var(--text-dim);
+  transition: color 200ms var(--ease);
+}
+
+.nav .nav__brand {
+  padding: var(--s2) 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.nav ul {
+  display: flex;
+  gap: var(--s4);
+}
+
+.nav li a {
+  position: relative;
+  display: block;
+  padding: var(--s2) 0;
+}
+
+/* The underline: grows from the left on hover, stays on for the current page. */
+.nav li a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  height: 1.5px;
+  background: var(--text);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 300ms var(--ease);
+}
+
+.nav a:hover,
+.nav a:focus-visible,
+.nav a[aria-current='page'] {
+  color: var(--text);
+}
+
+.nav li a:hover::after,
+.nav li a:focus-visible::after,
+.nav li a[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+.nav li a:active {
+  opacity: 0.7;
+}
+
+.nav__toggle {
+  display: none;
+}
+
+/* ---- 2. The 3D home page ---- */
+/* The menu floats over the scene. It is dimmed outside the arcade
+   (body.is-outside is set by src/scene/arcade.js) and full brightness inside. */
+.arcade .nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: none;
+  backdrop-filter: none;
+  border-bottom: 0;
+}
+
+.arcade .nav a,
+.arcade .nav__toggle {
+  font: 400 1.625rem / 1 var(--font-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arcade .nav .nav__brand {
+  color: var(--text-dim);
+}
+
+.arcade .nav li a::after {
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.arcade.is-outside .nav:not(:hover, :focus-within) {
+  opacity: 0.55;
+}
+
+/* ---- 3. Phones ---- */
+@media (max-width: 640px) {
+  .nav {
+    padding: 0 var(--s3);
+    /* A blurred bar would trap the full-screen overlay inside it, so the bar is solid on phones. */
+    background: var(--bg);
+    backdrop-filter: none;
+  }
+
+  .nav__toggle {
+    display: block;
+    position: relative;
+    z-index: 2;
+    margin-right: calc(var(--s2) * -1);
+    padding: var(--s2);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .nav__toggle[aria-expanded='true'] {
+    color: var(--text);
+  }
+
+  .nav__brand {
+    position: relative;
+    z-index: 2;
+  }
+
+  .nav__menu {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--bg) 96%, transparent);
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 250ms var(--ease),
+      visibility 250ms;
+  }
+
+  .nav.is-open .nav__menu {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav ul {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s3);
+  }
+
+  .nav li a,
+  .arcade .nav li a {
+    padding: var(--s2);
+    font-size: 1.75rem;
+    font-weight: 600;
+    /* Each link slides up a little as the overlay opens. */
+    transform: translateY(12px);
+    transition:
+      transform 350ms var(--ease),
+      color 200ms var(--ease);
+  }
+
+  .arcade .nav li a {
+    font-size: 2.5rem;
+    color: var(--text);
+  }
+
+  .nav.is-open li a {
+    transform: none;
+  }
+
+  .nav li a::after {
+    left: var(--s2);
+    right: var(--s2);
+  }
+}

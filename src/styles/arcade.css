@@ -1,0 +1,307 @@
+/* The home page: the 3D canvas, the text drawn over it, the loading screen, and the 2D landing. */
+
+/* ---- 3D mode (JavaScript on and WebGL available) ---- */
+.js:not(.no-webgl) .arcade {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* In 3D mode the HTML version of the page is kept for screen readers but not shown. */
+.js:not(.no-webgl) .landing {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.js:not(.no-webgl) .footer {
+  display: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* swipes go to the arcade, not to the browser */
+}
+
+/* Darkened corners, so the street stays shrouded and the neon is the brightest thing on screen. */
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgb(0 0 0 / 0.6) 100%);
+}
+
+/* ---- Loading screen ---- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  background: #000;
+  transition: opacity 700ms var(--ease);
+}
+
+.loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader__text {
+  padding: var(--s2);
+  border: 0;
+  background: none;
+  font: 800 clamp(1.125rem, 3.4vw, 1.75rem) / 1.4 var(--font-loader);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  text-align: center;
+}
+
+.loader__start {
+  cursor: pointer;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.loader__start:hover {
+  color: var(--cyan);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---- Text over the scene ---- */
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 41; /* above the loading screen, so the skip link is there from the first moment */
+  pointer-events: none; /* clicks pass through to the canvas... */
+}
+
+.hud a,
+.hud button {
+  pointer-events: auto; /* ...except on real links and buttons */
+}
+
+.hud__prompt,
+.hud__skip {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+}
+
+.hud__prompt {
+  bottom: 88px;
+  color: var(--text);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+
+.hud__skip {
+  bottom: var(--s3);
+  padding: var(--s2);
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 200ms var(--ease);
+}
+
+.hud__skip:hover,
+.hud__skip:focus-visible {
+  color: var(--cyan);
+}
+
+/* ---- Selected cabinet: arrows, label, counter ---- */
+.hud__cabinet {
+  position: absolute;
+  left: 50%;
+  bottom: var(--s4);
+  translate: -50% 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 400px) auto;
+  align-items: center;
+  gap: var(--s2);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--s2));
+  animation: rise 400ms var(--ease) both;
+}
+
+.label {
+  display: grid;
+  gap: var(--s1);
+  padding: var(--s2) var(--s3);
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(8px);
+  text-align: center;
+  text-decoration: none;
+  transition:
+    border-color 200ms var(--ease),
+    box-shadow 200ms var(--ease);
+}
+
+.label:hover,
+.label:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 32px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.label__name {
+  font: 400 0.8125rem / 1.6 var(--font-pixel);
+  color: var(--accent);
+}
+
+.label__tagline {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.label__cta {
+  margin-top: 4px;
+  color: var(--text-dim);
+}
+
+.label__cta kbd {
+  padding: 3px 7px;
+  border: 1px solid var(--text-dim);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--text);
+}
+
+.hud__arrow {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(8px);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 200ms var(--ease),
+    color 200ms var(--ease),
+    opacity 200ms var(--ease);
+}
+
+.hud__arrow:hover:not(:disabled),
+.hud__arrow:focus-visible {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.hud__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.hud__counter {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---- Transition glow ---- */
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---- 2D landing (no WebGL, low-powered device, or JavaScript off) ---- */
+.no-webgl #scene,
+.no-webgl .vignette,
+html:not(.js) .vignette,
+.no-webgl .loader,
+.no-webgl .hud,
+html:not(.js) #scene,
+html:not(.js) .loader,
+html:not(.js) .hud {
+  display: none;
+}
+
+.no-webgl .arcade .nav,
+html:not(.js) .arcade .nav {
+  position: sticky;
+}
+
+.neon-sign {
+  display: grid;
+  justify-items: center;
+  padding-block: var(--s4) var(--s5);
+  font-family: var(--font-neon);
+  font-weight: 400;
+  line-height: 1;
+  text-align: center;
+}
+
+.neon-sign span:first-child {
+  font-size: clamp(3.5rem, 13vw, 8rem);
+  color: #ffd0f6;
+  text-shadow:
+    0 0 12px var(--magenta),
+    0 0 48px var(--magenta);
+}
+
+.neon-sign span:last-child {
+  margin-top: var(--s2);
+  font-size: clamp(1.75rem, 6.5vw, 4rem);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-right: -0.25em;
+  color: #d0faff;
+  text-shadow:
+    0 0 10px var(--cyan),
+    0 0 36px var(--cyan);
+}
+
+.landing .lede {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.landing__more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: var(--s5);
+}
+
+/* On phones the hints talk about touch instead of the keyboard. */
+.for-touch {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .for-mouse {
+    display: none;
+  }
+
+  .for-touch {
+    display: inline;
+  }
+
+  .label__cta kbd {
+    display: none;
+  }
+
+  .label__cta::before {
+    content: 'Tap ';
+  }
+}

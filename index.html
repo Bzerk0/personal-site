@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hudson's Arcade | Hudson Bjerkness</title>
+  <meta name="description" content="The portfolio of Hudson Bjerkness: an arcade at night where every cabinet is a project.">
+  <!--head-->
+  <link rel="stylesheet" href="/src/styles/arcade.css">
+  <!-- Marks that JavaScript is on, before anything is drawn. Without it, the page is the plain 2D landing. -->
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="arcade">
+  <!--nav-->
+
+  <!-- The 3D scene is drawn here. -->
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <!-- Loading screen -->
+  <div id="loader" class="loader">
+    <p id="loader-label" class="loader__text" role="status">LOADING 0%</p>
+    <button id="start" class="loader__text loader__start" type="button" hidden>PRESS ENTER / CLICK TO START</button>
+  </div>
+
+  <!-- Text shown on top of the 3D scene -->
+  <div class="hud">
+    <p id="prompt" class="hud__prompt mono" hidden><span class="for-mouse">scroll · click · enter</span><span class="for-touch">swipe · tap</span></p>
+    <a id="skip" class="hud__skip mono" href="/portfolio/">Skip to site <span aria-hidden="true">→</span></a>
+
+    <div id="cabinet-ui" class="hud__cabinet" hidden>
+      <button id="prev" class="hud__arrow" type="button" aria-label="Previous cabinet">‹</button>
+      <div aria-live="polite">
+        <a id="label" class="label" href="/portfolio/">
+          <span class="label__name"></span>
+          <span class="label__tagline"></span>
+          <span class="label__cta mono"><kbd>Enter</kbd> to play</span>
+        </a>
+      </div>
+      <button id="next" class="hud__arrow" type="button" aria-label="Next cabinet">›</button>
+      <p id="counter" class="hud__counter mono" aria-hidden="true"></p>
+    </div>
+  </div>
+
+  <!-- Full-screen glow used during transitions -->
+  <div id="flash" class="flash" aria-hidden="true"></div>
+
+  <!-- The same content as plain HTML. Screen readers always get it, and it becomes the whole page
+       (the "2D landing") when 3D can't run. -->
+  <main id="main" class="wrap landing">
+    <h1 class="neon-sign"><span>Hudson’s</span> <span>Arcade</span></h1>
+    <p class="lede">The portfolio of Hudson Bjerkness. Every cabinet in the arcade is a project: pick one to see what it is and what I did.</p>
+    <!--project-grid-->
+    <p class="landing__more">
+      <a class="button" href="/about/">About Hudson</a>
+      <a class="button button--ghost" href="/contact/">Contact</a>
+    </p>
+  </main>
+  <!--footer-->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+/* The flat pages: About, Portfolio, Contact, project pages, 404, and the 2D landing.
+   These are deliberately plain and professional: one clean font (Inter), neutral colors,
+   no arcade styling. The arcade look lives in arcade.css and only applies to the home page. */
+
+.page {
+  --focus: var(--text);
+  display: flex; /* pushes the footer to the bottom on short pages */
+  flex-direction: column;
+}
+
+.page main {
+  flex: 1;
+}
+
+.wrap {
+  width: min(100% - 2 * var(--s3), 1040px);
+  margin-inline: auto;
+  padding-block: var(--s6) var(--s7);
+  animation: rise 400ms var(--ease) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---- Text ---- */
+h1 {
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+h2 {
+  margin-top: var(--s6);
+  margin-bottom: var(--s3);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Small label above a title, e.g. "Project". The dot takes the project's color. */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-bottom: var(--s2);
+  font-size: var(--t-small);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.lede {
+  margin-top: var(--s3);
+  max-width: 36em;
+  font-size: var(--t-lede);
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.wrap a:not(.card, .button, .back) {
+  color: var(--text);
+  text-decoration-color: var(--text-dim);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 200ms var(--ease);
+}
+
+.wrap a:not(.card, .button, .back):hover {
+  text-decoration-color: var(--text);
+}
+
+/* Unfinished content: anything still marked TODO gets a dashed amber outline. */
+.todo {
+  padding: 2px 6px;
+  border: 1px dashed var(--amber);
+  border-radius: 4px;
+  color: var(--amber);
+  font-size: 0.9em;
+}
+
+/* ---- Buttons ---- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  padding: 12px 20px;
+  border: 1px solid var(--text);
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font: 500 0.9375rem / 1.2 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 200ms var(--ease),
+    border-color 200ms var(--ease),
+    transform 200ms var(--ease);
+}
+
+.button:hover,
+.button:focus-visible {
+  background: #fff;
+  border-color: #fff;
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: none;
+}
+
+/* Quieter second button: outline only. */
+.button--ghost {
+  border-color: var(--line);
+  background: none;
+  color: var(--text);
+}
+
+.button--ghost:hover,
+.button--ghost:focus-visible {
+  border-color: var(--text-dim);
+  background: var(--bg-raised);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s5);
+}
+
+/* ---- "Screens": the framed picture used on cards and project pages ---- */
+.screen {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+
+.screen img,
+.screen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.screen--hero {
+  max-width: 800px;
+  margin-top: var(--s5);
+  border-radius: 16px;
+}
+
+/* Stand-in shown until a real screenshot is added to projects.json. */
+.screen-placeholder {
+  display: grid;
+  place-content: center;
+  gap: var(--s1);
+  height: 100%;
+  padding: var(--s3);
+  text-align: center;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--bg-raised)), var(--bg-raised) 70%);
+}
+
+.screen-placeholder span {
+  font-size: clamp(1.125rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.screen-placeholder small {
+  font-size: var(--t-small);
+  color: var(--text-dim);
+}
+
+/* ---- Project grid (Portfolio page and the 2D landing) ---- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--s3);
+  margin-top: var(--s5);
+}
+
+.card {
+  display: block;
+  height: 100%;
+  padding: 12px 12px var(--s3);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-raised);
+  text-decoration: none;
+  transition:
+    border-color 200ms var(--ease),
+    transform 200ms var(--ease);
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--text-dim);
+  transform: translateY(-4px);
+}
+
+.card__name,
+.card__tagline,
+.card__cta {
+  margin-inline: 12px;
+}
+
+.card__name {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-top: var(--s3);
+  margin-bottom: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* a small dot in the project's color */
+.card__name::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.card__tagline {
+  margin-top: var(--s1);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.card__cta {
+  display: inline-block;
+  margin-top: var(--s2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.card__cta span {
+  display: inline-block;
+  transition: transform 200ms var(--ease);
+}
+
+.card:hover .card__cta span {
+  transform: translateX(4px);
+}
+
+/* ---- Fact rows: label on the left, content on the right (About, Contact, project pages) ---- */
+.spec {
+  margin-top: var(--s5);
+  border-top: 1px solid var(--line);
+}
+
+h2 + .spec {
+  margin-top: 0;
+}
+
+.spec > div {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--s3);
+  padding-block: var(--s3);
+  border-bottom: 1px solid var(--line);
+}
+
+.spec dt {
+  padding-top: 5px;
+  font-size: var(--t-small);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.spec dd {
+  max-width: 40em;
+}
+
+.spec dd p + p {
+  margin-top: var(--s1);
+}
+
+.spec .dim {
+  color: var(--text-dim);
+}
+
+@media (max-width: 640px) {
+  .spec > div {
+    grid-template-columns: 1fr;
+    gap: var(--s1);
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s1);
+}
+
+.tags li {
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.9375rem;
+}
+
+.tags li:has(.todo) {
+  padding: 0;
+  border: 0;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+/* ---- Project page ---- */
+.back {
+  display: inline-block;
+  margin-bottom: var(--s5);
+  padding-block: var(--s1);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-dim);
+  transition: color 200ms var(--ease);
+}
+
+.back:hover,
+.back:focus-visible {
+  color: var(--text);
+}
+
+.back span {
+  display: inline-block;
+  transition: transform 200ms var(--ease);
+}
+
+.back:hover span {
+  transform: translateX(-4px);
+}
+
+.note {
+  margin-top: var(--s4);
+  font-size: 0.875rem;
+  color: var(--text-dim);
+}
+
+/* ---- Contact form ---- */
+.form {
+  display: grid;
+  gap: var(--s3);
+  max-width: 560px;
+}
+
+.form label {
+  display: grid;
+  gap: var(--s1);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form input,
+.form textarea {
+  width: 100%;
+  padding: 12px var(--s2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  color: var(--text);
+  font: 400 1rem / 1.5 var(--font-body);
+  transition: border-color 200ms var(--ease);
+}
+
+.form input:hover,
+.form textarea:hover {
+  border-color: var(--text-dim);
+}
+
+.form input:focus-visible,
+.form textarea:focus-visible {
+  outline-offset: 0;
+  border-color: var(--text);
+}
+
+.form textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.form .button {
+  justify-self: start;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ---- 404 ---- */
+.gameover {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  min-height: calc(100dvh - var(--nav-h) - 120px);
+  text-align: center;
+}
+
+.gameover .eyebrow::before {
+  display: none;
+}
+
+.gameover .lede {
+  margin-bottom: var(--s4);
+}
+
+/* ---- Footer ---- */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+  color: var(--text-dim);
+}
+
+.footer ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+}
+
+.footer a {
+  text-decoration: none;
+  transition: color 200ms var(--ease);
+}
+
+.footer a:hover,
+.footer a:focus-visible {
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .footer {
+    padding-inline: var(--s3);
+  }
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Contact | Hudson Bjerkness</title>
+  <meta name="description" content="Get in touch with Hudson Bjerkness by email, LinkedIn, or the contact form.">
+  <!--head-->
+</head>
+<body class="page">
+  <!--nav-->
+  <main id="main" class="wrap">
+    <h1>Contact</h1>
+    <p class="lede">Have a project, a role, or a question? Send a message and I'll get back to you.</p>
+
+    <dl class="spec">
+      <div>
+        <dt>Email</dt>
+        <dd><span class="todo">TODO: public email address (as a mailto: link).</span></dd>
+      </div>
+      <div>
+        <dt>LinkedIn</dt>
+        <dd><span class="todo">TODO: LinkedIn profile link.</span></dd>
+      </div>
+    </dl>
+
+    <h2>Send a message</h2>
+    <!-- Netlify Forms: Netlify sees data-netlify="true" when the site deploys and collects the
+         submissions for you. No server code needed. The hidden "bot-field" is a spam trap. -->
+    <form class="form" name="contact" method="POST" action="/contact/thanks/" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="contact">
+      <p class="hidden"><label>Leave this empty <input name="bot-field"></label></p>
+      <label>Name <input type="text" name="name" autocomplete="name" required></label>
+      <label>Email <input type="email" name="email" autocomplete="email" required></label>
+      <label>Message <textarea name="message" required></textarea></label>
+      <button class="button" type="submit">Send message</button>
+    </form>
+  </main>
+  <!--footer-->
+  <script type="module" src="/src/page.js"></script>
+</body>
+</html>
