@@ -32,7 +32,7 @@ async function start3D() {
 
   try {
     // The fonts must be ready before the sign and marquees are painted.
-    const fonts = Promise.all(['"Press Start 2P"', '"Tilt Neon"', '"Inter Variable"'].map((f) => document.fonts.load(`16px ${f}`)));
+    const fonts = Promise.all(['"Press Start 2P"', '"Tilt Neon"', '"Inter Variable"', '"Micro 5"'].map((f) => document.fonts.load(`16px ${f}`)));
     // Three.js is big, so it is downloaded separately. The page stays black until the scene is ready.
     const { createArcade } = await import('./scene/arcade.js');
     await fonts;

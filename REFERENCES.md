@@ -49,3 +49,8 @@ What I took from it:
 - On the flat pages my menu uses the same idea: clean sans-serif links with an underline that slides in.
 
 What I could not capture: the hover and click behaviour. The first matching link in the page was a hidden phone-menu copy, so the automated hover timed out. My hover, focus, and current-page states are my own design.
+
+## Third-party assets (cabinet-landing branch)
+
+- **Cabinet model:** "Defender Arcade" by Delinx, https://sketchfab.com/3d-models/defender-arcade-9e656531a0ea4b6595d2337a4006a552, licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Credited on the home page (`.hud__credit` in `index.html`).
+  - Changes: the original color texture (Williams *Defender* artwork and logos) was replaced with a plain paint job made here (`blender/textures/cabinet-paint.png`, one flat color per part). The screen area was split into its own `Screen` part, the parts were joined and scaled to meters, transparency was turned off, and the textures were re-saved as JPEG (`public/models/cabinet.glb`). The model's bump (normal) and roughness maps are kept; they carry no artwork.

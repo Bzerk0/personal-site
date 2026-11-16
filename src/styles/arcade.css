@@ -60,7 +60,7 @@
 .hud {
   position: fixed;
   inset: 0;
-  z-index: 41; /* above the cover, so the skip link is there from the first moment */
+  z-index: 41; /* above the cover */
   pointer-events: none; /* clicks pass through to the canvas... */
 }
 
@@ -69,124 +69,184 @@
   pointer-events: auto; /* ...except on real links and buttons */
 }
 
-.hud__prompt,
-.hud__skip {
+/* ---- The project carousel ----
+   The projects are drawn on the cabinet's 3D screen. These are the HTML controls over it.
+   src/scene/arcade.js measures where the screen is in the window and sets
+   --sx, --sy (top-left corner), --sw, --sh (size) on #menu. */
+.carousel {
   position: absolute;
-  left: 50%;
-  translate: -50% 0;
-  white-space: nowrap;
+  inset: 0;
+  --gap: clamp(6px, 2.5vw, 40px); /* space between the screen and each arrow */
+  --arrow: clamp(44px, 5vw, 64px);
 }
 
-.hud__prompt {
-  bottom: 88px;
-  color: var(--text);
-  animation: pulse 2.6s ease-in-out infinite;
+/* The screen itself is the link that opens the project showing on it. */
+.carousel__screen {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: var(--sw);
+  height: var(--sh);
+  border-radius: 12px;
+  touch-action: pan-y; /* horizontal swipes go to the carousel */
+  -webkit-tap-highlight-color: transparent;
 }
 
-.hud__skip {
-  bottom: var(--s3);
-  padding: var(--s2);
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: color 200ms var(--ease);
+.carousel__screen:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 8px;
 }
 
-.hud__skip:hover,
-.hud__skip:focus-visible {
-  color: var(--cyan);
+/* ---- The two arrows, either side of the screen ---- */
+.carousel__arrow {
+  position: absolute;
+  top: calc(var(--sy) + var(--sh) / 2);
+  width: var(--arrow);
+  height: var(--arrow);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  translate: 0 -50%;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 70%, transparent));
+  transition:
+    transform 200ms var(--ease),
+    filter 200ms var(--ease),
+    color 300ms var(--ease);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ---- Selected cabinet: arrows, label, counter ---- */
-.hud__cabinet {
+.carousel__arrow--prev {
+  left: calc(var(--sx) - var(--gap) - var(--arrow));
+}
+
+.carousel__arrow--next {
+  left: calc(var(--sx) + var(--sw) + var(--gap));
+}
+
+/* A chunky pixel-art triangle, pointing right; the "previous" one is mirrored. */
+.carousel__arrow span {
+  width: 55%;
+  height: 70%;
+  background: currentColor;
+  clip-path: polygon(0 0, 20% 0, 20% 10%, 40% 10%, 40% 20%, 60% 20%, 60% 30%, 80% 30%, 80% 40%, 100% 40%, 100% 60%, 80% 60%, 80% 70%, 60% 70%, 60% 80%, 40% 80%, 40% 90%, 20% 90%, 20% 100%, 0 100%);
+}
+
+.carousel__arrow--prev span {
+  scale: -1 1;
+}
+
+/* A gentle nudge outward so it reads as "there's more this way". */
+.carousel__arrow--next {
+  animation: nudge-right 1.8s ease-in-out infinite;
+}
+
+.carousel__arrow--prev {
+  animation: nudge-left 1.8s ease-in-out infinite;
+}
+
+@keyframes nudge-right {
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes nudge-left {
+  50% {
+    transform: translateX(-5px);
+  }
+}
+
+.carousel__arrow:hover,
+.carousel__arrow:focus-visible {
+  animation: none;
+  color: #fff;
+  filter: drop-shadow(0 0 14px var(--accent));
+}
+
+.carousel__arrow--next:hover {
+  transform: translateX(4px);
+}
+
+.carousel__arrow--prev:hover {
+  transform: translateX(-4px);
+}
+
+.carousel__arrow:active {
+  transform: scale(0.9);
+}
+
+.carousel__arrow:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ---- Controls legend, along the bottom of the window ---- */
+.carousel__keys {
   position: absolute;
   left: 50%;
   bottom: var(--s4);
   translate: -50% 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 400px) auto;
-  align-items: center;
-  gap: var(--s2);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s1) var(--s4);
   width: max-content;
-  max-width: calc(100vw - 2 * var(--s2));
-  animation: rise 400ms var(--ease) both;
-}
-
-.label {
-  display: grid;
-  gap: var(--s1);
-  padding: var(--s2) var(--s3);
-  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(8px);
-  text-align: center;
-  text-decoration: none;
-  transition:
-    border-color 200ms var(--ease),
-    box-shadow 200ms var(--ease);
-}
-
-.label:hover,
-.label:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 32px color-mix(in srgb, var(--accent) 30%, transparent);
-}
-
-.label__name {
-  font: 400 0.8125rem / 1.6 var(--font-pixel);
-  color: var(--accent);
-}
-
-.label__tagline {
-  font-size: 0.9375rem;
-  line-height: 1.45;
-  color: var(--text);
-}
-
-.label__cta {
-  margin-top: 4px;
+  max-width: calc(100vw - 2 * var(--s3));
+  font: 400 1.5rem / 1 var(--font-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-dim);
 }
 
-.label__cta kbd {
-  padding: 3px 7px;
+.carousel__keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carousel__keys kbd {
+  min-width: 1.6em;
+  padding: 3px 6px 1px;
   border: 1px solid var(--text-dim);
+  border-bottom-width: 3px;
   border-radius: 4px;
   font: inherit;
+  text-align: center;
   color: var(--text);
 }
 
-.hud__arrow {
-  width: 48px;
-  height: 48px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(8px);
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    border-color 200ms var(--ease),
-    color 200ms var(--ease),
-    opacity 200ms var(--ease);
+/* Keyboard keys for mouse/keyboard users, a plain sentence on touch screens. */
+.carousel__keys .for-touch {
+  display: none;
 }
 
-.hud__arrow:hover:not(:disabled),
-.hud__arrow:focus-visible {
-  border-color: var(--cyan);
-  color: var(--cyan);
+@media (pointer: coarse) {
+  .carousel__keys .for-mouse {
+    display: none;
+  }
+
+  .carousel__keys .for-touch {
+    display: inline;
+    text-align: center;
+  }
 }
 
-.hud__arrow:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.hud__counter {
-  grid-column: 1 / -1;
-  text-align: center;
+.hud__credit {
+  position: absolute;
+  right: var(--s2);
+  bottom: var(--s1);
+  font-size: 0.6875rem;
   color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.hud__credit a {
+  color: inherit;
 }
 
 [hidden] {
@@ -276,11 +336,4 @@ html:not(.js) .arcade .nav {
     display: inline;
   }
 
-  .label__cta kbd {
-    display: none;
-  }
-
-  .label__cta::before {
-    content: 'Tap ';
-  }
 }

@@ -23,7 +23,7 @@ const nav = (url) => `<header class="nav">
     <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menu</button>
     <nav id="nav-menu" class="nav__menu" aria-label="Main">
       <ul>
-        ${SITE.nav.map((l) => `<li><a href="${l.href}"${url.startsWith(l.href) ? ' aria-current="page"' : ''}>${l.label}</a></li>`).join('\n        ')}
+        ${SITE.nav.map((l) => `<li><a href="${l.href}"${url.startsWith(l.href) ? ' aria-current="page"' : ''}>\\${l.label.toLowerCase()}</a></li>`).join('\n        ')}
       </ul>
     </nav>
   </header>`;

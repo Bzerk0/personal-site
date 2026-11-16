@@ -97,6 +97,11 @@
   text-transform: uppercase;
 }
 
+/* The three page links stay lowercase, as written in vite.config.js ("\about"). */
+.arcade .nav li a {
+  text-transform: none;
+}
+
 .arcade .nav .nav__brand {
   color: var(--text-dim);
 }

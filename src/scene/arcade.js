@@ -1,8 +1,9 @@
 // The 3D experience: sets up Three.js, draws every frame, and reacts to input.
 // It moves through a few states:
 //   'waiting'  still loading (the page is black)
-//   'outside'  on the street, looking at the sign
-//   'inside'   in front of a cabinet
+//   'outside'  looking at the lone cabinet from across the dark room
+//   'title'    zoomed into its screen, the title sequence is playing
+//   'menu'     zoomed into its screen, browsing the project carousel
 //   'busy'     a transition is playing (input is ignored)
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -12,9 +13,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { COLORS } from '../constants.js';
 import { menuIsOpen } from '../ui/nav.js';
-import { createExterior } from './exterior.js';
-import { createInterior } from './interior.js';
-import { enterTransition, openTransition } from './transitions.js';
+import { createCabinetScene } from './cabinetScene.js';
+import { zoomTransition, openTransition } from './transitions.js';
 
 const $ = (id) => document.getElementById(id);
 const FOV = 50;
@@ -31,31 +31,45 @@ export async function createArcade({ canvas, projects }) {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(COLORS.bg);
-  const FOG_OUTSIDE = 0.012; // thin outside, so the building shows from far away
-  const FOG_INSIDE = 0.03;
-  scene.fog = new THREE.FogExp2(COLORS.bg, FOG_OUTSIDE); // things far away fade into the dark
-  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 400); // far enough to reach the stars
+  scene.fog = new THREE.FogExp2(COLORS.bg, 0.045); // the room fades into the dark
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.05, 120);
 
-  const exterior = await createExterior({ lite: mobile, flicker: !reduced });
-  const interior = await createInterior({ projects, lite: mobile });
-  scene.add(exterior.group, interior.group);
+  const room = await createCabinetScene({ blink: !reduced, projects, touch: matchMedia('(pointer: coarse)').matches });
+  scene.add(room.group);
 
-  // ---- Bloom: makes anything brighter than white glow (the neon). HTML text is never affected. ----
+  // ---- Bloom: makes anything brighter than white glow (the screen). HTML text is never affected. ----
   const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: mobile ? 0 : 4 }));
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.35, 0.4, 0.6)); // strength, radius, threshold
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.7, 0.55, 0.6); // strength, radius, threshold
+  composer.addPass(bloom);
+  // How close the camera is to the screen: 0 = across the room, 1 = at the screen. Up close the glow is
+  // turned down so the text on the screen stays readable.
+  const view = { close: 0 };
+  const setClose = (close, duration = 0) =>
+    gsap.to(view, { close, duration, ease: 'power2.inOut', onUpdate: () => (bloom.strength = 0.7 - 0.6 * view.close) });
   composer.addPass(new OutputPass());
   let useBloom = true;
 
   // ---- Camera rig: where the camera stands and what it looks at ----
   const rig = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
   let aspect = 1;
-  // Each "pose" backs the camera up on narrow screens so the subject still fits.
-  // The landing view: far down the street, the building small in the middle of the dark.
-  // (it is 13 m wide and 12 m tall, with its front wall at z = -1.4)
-  const outsidePose = () => ({ pos: { x: 0, y: 3, z: 55 }, look: { x: 0, y: 5.5, z: -1.4 } });
-  const cabinetPose = (i) => ({ pos: { x: interior.xOf(i), y: 1.35, z: Math.max(4, 0.9 / (TAN * aspect)) }, look: { x: interior.xOf(i), y: 0.85, z: 0 } });
-  const screenPose = (i) => ({ pos: { x: interior.xOf(i), y: 1.45, z: 1.05 }, look: { x: interior.xOf(i), y: 1.39, z: 0.07 } });
+  // The landing view: across the room, the cabinet small in the middle of the dark.
+  const outsidePose = () => ({ pos: { x: 0, y: 1.5, z: 8 }, look: { x: 0, y: 1.05, z: 0 } });
+  // Straight in front of the screen, close enough that it fills the window. `push` < 1 goes closer still.
+  const screenPose = (push = 1) => {
+    const { center, normal, width, height } = room.screen;
+    const distance = Math.min(height / 2 / TAN, width / 2 / (TAN * aspect)) * 0.97 * push;
+    const pos = center.clone().addScaledVector(normal, distance);
+    return { pos: { x: pos.x, y: pos.y, z: pos.z }, look: { x: center.x, y: center.y, z: center.z } };
+  };
+  // The carousel view: the whole screen in view with room either side for the arrows, and a bit of cabinet around it.
+  const carouselPose = () => {
+    const { center, normal, width, height } = room.screen;
+    const share = aspect < 1 ? 0.7 : 0.6; // how much of the window's width the screen may take
+    const distance = Math.max(height / 2 / (TAN * 0.66), width / 2 / (TAN * aspect * share));
+    const pos = center.clone().addScaledVector(normal, distance);
+    return { pos: { x: pos.x, y: pos.y, z: pos.z }, look: { x: center.x, y: center.y, z: center.z } };
+  };
   const setPose = (pose) => {
     rig.pos.copy(pose.pos);
     rig.look.copy(pose.look);
@@ -64,8 +78,8 @@ export async function createArcade({ canvas, projects }) {
   let state = 'waiting';
   // Also written to <body data-state="..."> so CSS and the test script can see it.
   const setState = (next) => (document.body.dataset.state = state = next);
-  let index = 0; // which cabinet is selected
-  let signPower = 0; // 0 = sign off, 1 = on
+  let index = 0; // which project is on the screen
+  let power = 0; // the screen: 0 = off, 1 = on
   let time = 0;
 
   function resize() {
@@ -75,7 +89,10 @@ export async function createArcade({ canvas, projects }) {
     composer.setSize(innerWidth, innerHeight);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
-    if (state === 'inside') setPose(cabinetPose(index));
+    if (state === 'menu' || state === 'title') {
+      setPose(carouselPose());
+      placeControls();
+    }
     else if (state !== 'busy') setPose(outsidePose());
   }
   addEventListener('resize', resize);
@@ -89,15 +106,14 @@ export async function createArcade({ canvas, projects }) {
     timer.update();
     const dt = Math.min(timer.getDelta(), 0.1);
     time += dt;
-    if (exterior.group.visible) exterior.update(time, signPower);
-
     camera.position.copy(rig.pos);
     if (state === 'outside' && !reduced) {
-      // idle sway: a slow drift so the street feels alive
-      camera.position.x += Math.sin(time * 0.3) * 0.2;
-      camera.position.y += Math.sin(time * 0.23) * 0.06;
+      // idle sway: a slow drift so the room feels alive
+      camera.position.x += Math.sin(time * 0.3) * 0.15;
+      camera.position.y += Math.sin(time * 0.23) * 0.05;
     }
     camera.lookAt(rig.look);
+    room.update(time, power, camera, renderer, view.close);
 
     if (useBloom) composer.render(dt);
     else renderer.render(scene, camera);
@@ -109,88 +125,126 @@ export async function createArcade({ canvas, projects }) {
       if (frames === 90 && slowFrames > 45) useBloom = false;
     }
   }
-  // Warm up: compile all the shaders now so the first transition is smooth.
-  // (Once per scene, because each one has its own set of lights.)
-  exterior.group.visible = false;
-  await renderer.compileAsync(scene, camera);
-  exterior.group.visible = true;
-  interior.group.visible = false;
+  // Warm up: compile the shaders now so the first frame is smooth.
   await renderer.compileAsync(scene, camera);
   renderer.setAnimationLoop(frame);
   // Stop drawing while the tab is in the background.
   document.addEventListener('visibilitychange', () => renderer.setAnimationLoop(document.hidden ? null : frame));
 
-  // ---- On-screen text (plain HTML on top of the canvas) ----
+  // ---- The carousel: the projects are drawn on the 3D screen; these are the HTML controls over it ----
   const flash = $('flash');
-  const hud = { prompt: $('prompt'), skip: $('skip'), cabinet: $('cabinet-ui'), label: $('label'), prev: $('prev'), next: $('next'), counter: $('counter') };
+  const display = room.display;
+  const hud = { menu: $('menu'), link: $('screen-link'), prev: $('prev'), next: $('next'), status: $('menu-status') };
 
-  function showCabinetInfo() {
-    const p = projects[index];
-    hud.label.href = `/projects/${p.slug}/`;
-    hud.label.style.setProperty('--accent', p.accent);
-    hud.label.querySelector('.label__name').textContent = p.name;
-    hud.label.querySelector('.label__tagline').textContent = p.tagline;
-    hud.counter.textContent = `${index + 1} / ${projects.length}`;
-    hud.prev.disabled = index === 0;
-    hud.next.disabled = index === projects.length - 1;
-    history.replaceState(null, '', `#${p.slug}`); // so Back / reload returns to this cabinet
+  // Lines the controls up with the screen as it appears in the window: the link covers the screen,
+  // the arrows sit just outside its left and right edges. Called whenever the camera settles.
+  function placeControls() {
+    camera.position.copy(rig.pos);
+    camera.lookAt(rig.look);
+    camera.updateMatrixWorld();
+    const { center, normal, width, height } = room.screen;
+    const right = new THREE.Vector3(0, 1, 0).cross(normal).normalize();
+    const up = normal.clone().cross(right).normalize();
+    const xs = [];
+    const ys = [];
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const corner = center.clone().addScaledVector(right, (sx * width) / 2).addScaledVector(up, (sy * height) / 2).project(camera);
+      xs.push(((corner.x + 1) / 2) * innerWidth);
+      ys.push(((1 - corner.y) / 2) * innerHeight);
+    }
+    const box = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+    for (const [key, value] of Object.entries(box)) hud.menu.style.setProperty(`--s${key}`, `${Math.round(value)}px`);
   }
 
-  function arriveInside() {
-    exterior.group.visible = false;
-    interior.group.visible = true;
-    scene.fog.density = FOG_INSIDE;
-    document.body.classList.remove('is-outside');
-    hud.prompt.hidden = hud.skip.hidden = true;
-    interior.setFocus(index, true);
-    showCabinetInfo();
+  // Shows project `i` (wrapping around at either end). `dir` +1 / -1 slides it in from the right / left.
+  function select(i, dir = 0) {
+    index = (i + projects.length) % projects.length;
+    const p = projects[index];
+    display.project(index, dir);
+    hud.menu.style.setProperty('--accent', p.accent);
+    hud.link.href = `/projects/${p.slug}/`;
+    hud.link.setAttribute('aria-label', `Open ${p.name}: ${p.tagline}`);
+    hud.status.textContent = `Project ${index + 1} of ${projects.length}: ${p.name}. ${p.tagline}`;
+    history.replaceState(null, '', `#${p.slug}`); // so Back / reload returns to this project
+  }
+
+  function showCarousel() {
+    placeControls();
+    hud.menu.hidden = false;
+    select(index);
+    setState('menu');
+    hud.link.focus({ preventScroll: true });
   }
 
   // ---- Actions ----
+  // From across the room: zoom up to the screen, then play the title sequence on it.
   function enter() {
     if (state !== 'outside') return;
     setState('busy');
-    hud.prompt.hidden = true;
-    enterTransition({ rig, setDoors: exterior.setDoors, flash, reduced, swap: arriveInside, inside: cabinetPose(index) }).eventCallback('onComplete', () => {
-      setState('inside');
-      hud.cabinet.hidden = false;
+    setClose(1, reduced ? 0 : 2);
+    zoomTransition({
+      rig,
+      flash,
+      reduced,
+      to: carouselPose(),
+      done: () => {
+        setState('title');
+        display.title(index, showCarousel);
+      },
     });
   }
 
-  function focus(i) {
-    i = THREE.MathUtils.clamp(i, 0, projects.length - 1);
-    if (state !== 'inside' || i === index) return;
-    index = i;
-    interior.setFocus(index);
-    showCabinetInfo();
-    const { pos } = cabinetPose(index);
-    gsap.to([rig.pos, rig.look], { x: pos.x, duration: reduced ? 0 : 0.7, ease: 'power3.out', overwrite: true });
+  function leave() {
+    if (state !== 'menu') return;
+    setState('busy');
+    hud.menu.hidden = true;
+    display.attract();
+    setClose(0, reduced ? 0 : 2);
+    history.replaceState(null, '', location.pathname);
+    zoomTransition({ rig, flash, reduced, to: outsidePose(), done: () => setState('outside') });
   }
 
+  // A project was chosen: push on into the screen, then load its page.
   function open() {
-    if (state !== 'inside') return;
+    if (state !== 'menu') return;
     setState('busy');
-    hud.cabinet.hidden = true;
+    hud.menu.hidden = true;
     const p = projects[index];
-    openTransition({ rig, flash, reduced, screen: screenPose(index), accent: p.accent, done: () => (location.href = `/projects/${p.slug}/`) });
+    openTransition({ rig, flash, reduced, screen: screenPose(0.35), accent: p.accent, done: () => (location.href = `/projects/${p.slug}/`) });
   }
+
+  hud.prev.addEventListener('click', () => select(index - 1, -1));
+  hud.next.addEventListener('click', () => select(index + 1, 1));
+  hud.link.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return; // open-in-new-tab still works normally
+    e.preventDefault();
+    open();
+  });
 
   // ---- Input ----
   addEventListener('keydown', (e) => {
     if (menuIsOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
     const onControl = e.target.closest?.('a, button, input, textarea, select'); // let links and buttons handle their own keys
     const press = e.key === 'Enter' || e.key === ' ';
+    const key = e.key.toLowerCase();
     if (state === 'outside' && press && !onControl) {
       e.preventDefault();
       enter();
-    } else if (state === 'inside') {
-      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') focus(index + 1);
-      else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') focus(index - 1);
-      else if (e.key === 'Enter' && !onControl) open();
+    } else if (state === 'title') {
+      // Any key skips the title sequence.
+      e.preventDefault();
+      display.skipTitle();
+    } else if (state === 'menu') {
+      if (key === 'arrowright' || key === 'd') select(index + 1, 1);
+      else if (key === 'arrowleft' || key === 'a') select(index - 1, -1);
+      else if (key === 'escape') leave();
+      else if (press && !e.target.closest?.('button')) open(); // on the arrow buttons, Enter/Space press the button instead
+      else return;
+      e.preventDefault();
     }
   });
 
-  // Scroll wheel: one cabinet per scroll gesture.
+  // Scroll wheel: on the landing it zooms in; on the screen, one project per scroll gesture.
   let lastWheel = 0;
   addEventListener(
     'wheel',
@@ -200,85 +254,71 @@ export async function createArcade({ canvas, projects }) {
       if (state === 'outside') {
         lastWheel = e.timeStamp;
         enter();
-      } else if (Math.abs(delta) > 4 && e.timeStamp - lastWheel > 600) {
+      } else if (state === 'title' && e.timeStamp - lastWheel > 400) {
+        display.skipTitle();
+      } else if (state === 'menu' && Math.abs(delta) > 4 && e.timeStamp - lastWheel > 400) {
         lastWheel = e.timeStamp;
-        focus(index + Math.sign(delta));
+        select(index + Math.sign(delta), Math.sign(delta));
       }
     },
     { passive: true },
   );
 
-  // Which cabinet is under the mouse / finger? (-1 = none)
-  const raycaster = new THREE.Raycaster();
-  function cabinetAt(e) {
-    raycaster.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
-    const hit = raycaster.intersectObjects(interior.cabinets.map((c) => c.hitBox))[0];
-    return hit ? interior.cabinets.findIndex((c) => c.hitBox === hit.object) : -1;
-  }
-
-  canvas.addEventListener('click', (e) => {
-    if (state === 'outside') return enter();
-    if (state !== 'inside') return;
-    const hit = cabinetAt(e);
-    if (hit === index) open();
-    else if (hit >= 0) focus(hit);
+  canvas.addEventListener('click', () => {
+    if (state === 'outside') enter();
+    else if (state === 'title') display.skipTitle();
   });
-  canvas.addEventListener('pointermove', (e) => {
-    canvas.style.cursor = state === 'outside' || (state === 'inside' && cabinetAt(e) >= 0) ? 'pointer' : '';
-  });
+  canvas.addEventListener('pointermove', () => (canvas.style.cursor = state === 'outside' ? 'pointer' : ''));
 
-  // Touch: swipe left/right to change cabinet; any swipe on the street walks in.
+  // Touch: any swipe in the room zooms in. On the screen, swipe left/right to change project; tap the screen to open it.
   let touchStart = null;
-  canvas.addEventListener('touchstart', (e) => (touchStart = e.changedTouches[0]), { passive: true });
-  canvas.addEventListener(
+  addEventListener('touchstart', (e) => (touchStart = e.changedTouches[0]), { passive: true });
+  addEventListener(
     'touchend',
     (e) => {
+      if (!touchStart || menuIsOpen() || e.target.closest?.('button, .nav')) return;
       const dx = e.changedTouches[0].clientX - touchStart.clientX;
       const dy = e.changedTouches[0].clientY - touchStart.clientY;
+      const swiped = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy);
       if (state === 'outside' && Math.hypot(dx, dy) > 30) enter();
-      else if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) focus(index + (dx < 0 ? 1 : -1));
+      else if (state === 'title' && Math.hypot(dx, dy) > 30) display.skipTitle();
+      else if (state === 'menu' && swiped) {
+        if (e.cancelable) e.preventDefault(); // a swipe across the screen must not also count as a tap on it
+        select(index + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+      }
     },
-    { passive: true },
+    { passive: false },
   );
 
-  hud.prev.addEventListener('click', () => focus(index - 1));
-  hud.next.addEventListener('click', () => focus(index + 1));
-  hud.label.addEventListener('click', (e) => {
-    if (e.ctrlKey || e.metaKey || e.shiftKey) return; // open-in-new-tab still works normally
-    e.preventDefault();
-    open();
-  });
-
-  // Coming back with the browser's Back button can restore this page mid-zoom. Put it back in front of the cabinet.
+  // Coming back with the browser's Back button can restore this page mid-zoom. Put it back on the screen.
   addEventListener('pageshow', (e) => {
     if (!e.persisted || state !== 'busy') return;
     gsap.set(flash, { opacity: 0 });
-    setPose(cabinetPose(index));
-    hud.cabinet.hidden = false;
-    setState('inside');
+    setPose(carouselPose());
+    setClose(1);
+    showCarousel();
   });
 
   // ---- Start. Called by main.js once everything has loaded. ----
-  // With a project slug (coming back from a project page) we go straight to that cabinet.
+  // With a project slug (coming back from a project page) we go straight to that project on the screen.
   function begin(slug) {
+    document.body.classList.add('is-outside');
     const startIndex = projects.findIndex((p) => p.slug === slug);
     if (startIndex >= 0) {
       index = startIndex;
-      arriveInside();
-      setPose(cabinetPose(index));
-      hud.cabinet.hidden = false;
-      setState('inside');
+      power = 1;
+      setPose(carouselPose());
+      setClose(1);
+      showCarousel();
       return;
     }
-    document.body.classList.add('is-outside');
-    hud.prompt.hidden = false;
     setPose(outsidePose());
     setState('busy');
-    // The sign powers on: a quick stutter, then steady. Input unlocks once it is lit.
-    const power = { value: 0 };
-    const tl = gsap.timeline({ onUpdate: () => (signPower = power.value), onComplete: () => (setState('outside')) });
-    if (reduced) tl.set(power, { value: 1 }).to({}, { duration: 0.4 });
-    else tl.to(power, { value: 1, duration: 0.06 }, 0.3).to(power, { value: 0.2, duration: 0.06 }, 0.45).to(power, { value: 1, duration: 0.5, ease: 'power2.out' }, 0.62);
+    // The screen warms up: a quick stutter, then steady. Input unlocks once it is lit.
+    const warm = { value: 0 };
+    const tl = gsap.timeline({ onUpdate: () => (power = warm.value), onComplete: () => setState('outside') });
+    if (reduced) tl.set(warm, { value: 1 }).to({}, { duration: 0.4 });
+    else tl.to(warm, { value: 1, duration: 0.06 }, 0.3).to(warm, { value: 0.2, duration: 0.06 }, 0.45).to(warm, { value: 1, duration: 0.5, ease: 'power2.out' }, 0.62);
   }
 
   return { begin };
